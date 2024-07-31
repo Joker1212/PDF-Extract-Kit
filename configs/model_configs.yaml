@@ -9,3 +9,6 @@ model_args:
   mfr_weight: models/MFR/UniMERNet
   tr_weight: models/TR/StructEqTable
   table_max_time: 60
+
+model_paths:
+  layout_reader_path: models/LayoutReader

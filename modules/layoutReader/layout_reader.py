@@ -4,6 +4,7 @@ import torch
 from collections import defaultdict
 
 from modules.layoutReader.model import LayoutLMv3ForBboxClassification
+from modules.layoutlmv3.layoutlmft.models.layoutlmv3.modeling_layoutlmv3 import LayoutBox
 
 CLS_TOKEN_ID = 0
 UNK_TOKEN_ID = 3
@@ -22,7 +23,6 @@ def BboxesMasks(boxes):
 
 
 def scale_bbox(bbox, width, height):
-
     x_scale = min(1000.0 / width, 1)
     y_scale = min(1000.0 / height, 1)
 
@@ -63,20 +63,28 @@ def decode(logits, length):
     return ret
 
 
-def layout_reader_sort(bboxes, model_path, width, height):
+def layout_reader_sort(layout_boxes: list[LayoutBox], model_path: str, width: int, height: int) -> (
+        list[LayoutBox], list[int]):
+    """
+  对布局盒子进行排序或其他处理。
+
+  :param layout_boxes: LayoutBox对象的列表
+  :param model_path: 模型路径的字符串
+  :param width: 宽度的整数值
+  :param height: 高度的整数值
+  """
+    bboxes = [layout_box.bbox for layout_box in layout_boxes]
     scaled_boxes = scale_bbox(bboxes, width, height)
     model = LayoutLMv3ForBboxClassification.from_pretrained(model_path)
     inputs = BboxesMasks(scaled_boxes)
     logits = model(**inputs).logits.cpu().squeeze(0)
     orders = decode(logits, len(scaled_boxes))
-    return orders
-
-
-
+    layout_boxes = [layout_boxes[i] for i in orders]
+    return layout_boxes, orders
 
 
 if __name__ == '__main__':
     bboxes = [[584, 0, 595, 1], [35, 120, 89, 133],
               [35, 140, 75, 152]]
     model_path = f"../../models/LayoutReader"
-    print(layout_reader_sort(bboxes, model_path, 400, 400))
+    # print(layout_reader_sort(bboxes, model_path, 400, 400))
