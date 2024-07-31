@@ -46,12 +46,12 @@ def layout_sorted_img_render(bboxes, page_img_file, output_path=None):
     cv2.imwrite(save_path, img)
 
 if __name__ == '__main__':
-    img_path = f'../../output/sorted/page1.jpg'
+    img_path = f'../../output/sorted/page0.jpg'
     json_path = f"../../output/latex.json"
     with open(json_path, 'r', encoding='utf-8') as file:
         # 使用json.load()函数读取文件内容并转换为Python数据结构（通常是字典或列表）
         data = json.load(file)
-        page = data[1]
+        page = data[0]
         single_page_res = page["layout_dets"]
         bounding_boxes = []
         idx = 0
@@ -63,5 +63,5 @@ if __name__ == '__main__':
                 # 将坐标值组合成一个四元组，并添加到列表中
                 bounding_boxes.append((xmin, ymin, xmax, ymax))
             idx += 1
-        bounding_boxes = filter_consecutive_boxes(bounding_boxes)
-        # bounding_boxes = layout_sorted_img_render(bounding_boxes, img_path)
+        bounding_boxes, valid_idx = filter_consecutive_boxes(bounding_boxes)
+        bounding_boxes = layout_sorted_img_render(bounding_boxes, img_path)

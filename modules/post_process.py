@@ -69,6 +69,7 @@ def calculate_iou(box1, box2):
     return iou
 
 
+# 将包含关系和重叠关系的box进行过滤，只保留一个
 def filter_consecutive_boxes(boxes, iou_threshold=0.92):
     if len(boxes) <= 1:
         return boxes
@@ -77,12 +78,17 @@ def filter_consecutive_boxes(boxes, iou_threshold=0.92):
     i = len(boxes) - 2  # 开始于倒数第二个元素
     current_box = boxes[i + 1]
     previous_box = boxes[i]
+    cur_idx = i + 1
+    idx = []
     while i >= 0:
         # 检查当前框是否包含或重叠于前一个框,或者包含了前一个框
-        if calculate_iou(current_box, previous_box) <= iou_threshold and not is_contained(current_box, previous_box):
+        if not is_contained(current_box, previous_box) and calculate_iou(current_box, previous_box) <= iou_threshold:
             filtered_boxes.insert(0, current_box)
             current_box = previous_box
+            idx.insert(0, cur_idx)
+            cur_idx = i
         i -= 1
         previous_box = boxes[i]
-
-    return boxes
+    filtered_boxes.insert(0, current_box)
+    idx.insert(0, cur_idx)
+    return filtered_boxes, idx
