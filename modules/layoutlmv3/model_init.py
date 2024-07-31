@@ -117,7 +117,7 @@ class Layoutlmv3_Predictor(object):
         MetadataCatalog.get(cfg.DATASETS.TRAIN[0]).thing_classes = self.mapping
         self.predictor = DefaultPredictor(cfg)
         
-    def __call__(self, image, ignore_catids=[]):
+    def __call__(self, image, ignore_catids=[], min_score = 0):
         page_layout_result = {
             "layout_dets": []
         }
@@ -127,6 +127,8 @@ class Layoutlmv3_Predictor(object):
         scores = outputs["instances"].to("cpu")._fields["scores"].tolist()
         for bbox_idx in range(len(boxes)):
             if labels[bbox_idx] in ignore_catids:
+                continue
+            if scores[bbox_idx] < min_score:
                 continue
             page_layout_result["layout_dets"].append({
                 "category_id": labels[bbox_idx],

@@ -81,12 +81,12 @@ if __name__ == '__main__':
     parser.add_argument('--render', action='store_true')
     args = parser.parse_args()
     print(args)
-    
+
     tz = pytz.timezone('Asia/Shanghai')
     now = datetime.datetime.now(tz)
     print(now.strftime('%Y-%m-%d %H:%M:%S'))
     print('Started!')
-    
+
     ## ======== model init ========##
     with open('configs/model_configs.yaml') as f:
         model_configs = yaml.load(f, Loader=yaml.FullLoader)
@@ -104,7 +104,7 @@ if __name__ == '__main__':
     print(now.strftime('%Y-%m-%d %H:%M:%S'))
     print('Model init done!')
     ## ======== model init ========##
-    
+
     start = time.time()
     if os.path.isdir(args.pdf):
         all_pdfs = [os.path.join(args.pdf, name) for name in os.listdir(args.pdf)]
@@ -140,16 +140,16 @@ if __name__ == '__main__':
                 latex_filling_list.append(new_item)
                 bbox_img = get_croped_image(Image.fromarray(image), [xmin, ymin, xmax, ymax])
                 mf_image_list.append(bbox_img)
-                
+
             layout_res['page_info'] = dict(
                 page_no = idx,
                 height = img_H,
                 width = img_W
             )
             doc_layout_result.append(layout_res)
-            
+
         # Formula recognition, collect all formula images in whole pdf file, then batch infer them.
-        a = time.time()  
+        a = time.time()
         dataset = MathDataset(mf_image_list, transform=mfr_transform)
         dataloader = DataLoader(dataset, batch_size=128, num_workers=32)
         mfr_res = []
@@ -161,7 +161,7 @@ if __name__ == '__main__':
             res['latex'] = latex_rm_whitespace(latex)
         b = time.time()
         print("formula nums:", len(mf_image_list), "mfr time:", round(b-a, 2))
-            
+
         # ocr and table recognition
         for idx, image in enumerate(img_list):
             pil_img = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
@@ -208,13 +208,13 @@ if __name__ == '__main__':
         basename = os.path.basename(single_pdf)[0:-4]
         with open(os.path.join(output_dir, f'{basename}.json'), 'w') as f:
             json.dump(doc_layout_result, f)
-        
+
         if args.vis:
             color_palette = [
                 (255,64,255),(255,255,0),(0,255,255),(255,215,135),(215,0,95),(100,0,48),(0,175,0),(95,0,95),(175,95,0),(95,95,0),
                 (95,95,255),(95,175,135),(215,95,0),(0,0,255),(0,255,0),(255,0,0),(0,95,215),(0,0,0),(0,0,0),(0,0,0)
             ]
-            id2names = ["title", "plain_text", "abandon", "figure", "figure_caption", "table", "table_caption", "table_footnote", 
+            id2names = ["title", "plain_text", "abandon", "figure", "figure_caption", "table", "table_caption", "table_footnote",
                         "isolate_formula", "formula_caption", " ", " ", " ", "inline_formula", "isolated_formula", "ocr_text"]
             vis_pdf_result = []
             for idx, image in enumerate(img_list):
@@ -245,20 +245,22 @@ if __name__ == '__main__':
                     draw.rectangle([x_min, y_min, x_max, y_max], fill=None, outline=color_palette[label], width=1)
                     fontText = ImageFont.truetype("assets/fonts/simhei.ttf", 15, encoding="utf-8")
                     draw.text((x_min, y_min), label_name, color_palette[label], font=fontText)
-                
+
                 width, height = vis_img.size
                 width, height = int(0.75*width), int(0.75*height)
                 vis_img = vis_img.resize((width, height))
                 vis_pdf_result.append(vis_img)
-            
+
             first_page = vis_pdf_result.pop(0)
             first_page.save(os.path.join(output_dir, f'{basename}.pdf'), 'PDF', resolution=100, save_all=True, append_images=vis_pdf_result)
             try:
                 shutil.rmtree('./temp')
             except:
                 pass
-            
+
     now = datetime.datetime.now(tz)
     end = time.time()
     print(now.strftime('%Y-%m-%d %H:%M:%S'))
+    print('Finished! time cost:', int(end-start), 's')
+
     print('Finished! time cost:', int(end-start), 's')
