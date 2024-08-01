@@ -194,7 +194,7 @@ def layout_abandon_fix_to_text(layout_boxes: list[LayoutBox]) -> (list[LayoutBox
     # 遍历列表中的元素，除了最后一个元素
     for i in range(len(layout_boxes) - 1):
         # 检查当前元素的label是否为'abandon'
-        if layout_boxes[i].label == 'abandon':
+        if layout_boxes[i].label == 'abandon' and i != 0:
             # 检查下一个元素的label是否不是'abandon'
             if layout_boxes[i + 1].label != 'abandon':
                 # 将当前元素的label设置为'plain_text'

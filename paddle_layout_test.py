@@ -55,7 +55,7 @@ def xiajibaxiede():
 
 if __name__ == '__main__':
     image_output = f'./output/paddle'
-    image_ori = f'./output/sorted/lunwen/page3.jpg'
+    image_ori = f'./output/sorted/latex/page0.jpg'
     with open('configs/model_configs.yaml') as f:
         model_configs = yaml.load(f, Loader=yaml.FullLoader)
     with Image.open(image_ori) as img:

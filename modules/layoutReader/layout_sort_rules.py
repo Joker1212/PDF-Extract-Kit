@@ -81,10 +81,6 @@ def sorted_layout_boxes(res: list[LayoutBox], w):
             res_left = []
             res_right = []
             i += 1
-    # if res_left:
-    #     new_res += res_left
-    # if res_right:
-    #     new_res += res_right
     return new_res
 
 
