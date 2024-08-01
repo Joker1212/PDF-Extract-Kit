@@ -7,6 +7,7 @@ from PIL import Image
 
 def load_pdf_fitz(pdf_path, dpi=72):
     images = []
+    ori_images =[]
     doc = fitz.open(pdf_path)
     for i in range(len(doc)):
         page = doc[i]
@@ -18,9 +19,9 @@ def load_pdf_fitz(pdf_path, dpi=72):
             pix = page.get_pixmap(matrix=fitz.Matrix(1, 1), alpha=False)
             image = Image.frombytes('RGB', (pix.width, pix.height), pix.samples)
 
-        # images.append(image)
+        ori_images.append(image)
         images.append(np.array(image)[:, :, ::-1])
-    return images
+    return ori_images, images
 
 
 if __name__ == '__main__':

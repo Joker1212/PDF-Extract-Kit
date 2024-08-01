@@ -1,11 +1,8 @@
 import re
 
-from modules.layoutlmv3.layoutlmft.models.layoutlmv3.modeling_layoutlmv3 import LayoutBox
+from paddleocr import PPStructure
 
-id2names = ["title", "plain_text", "abandon", "figure", "figure_caption", "table", "table_caption",
-            "table_footnote",
-            "isolate_formula", "formula_caption", " ", " ", " ", "inline_formula", "isolated_formula",
-            "ocr_text"]
+from modules.layoutlmv3.layoutlmft.models.layoutlmv3.modeling_layoutlmv3 import LayoutBox, id2names
 
 
 def layout_rm_equation(layout_res):
@@ -44,20 +41,35 @@ def latex_rm_whitespace(s: str):
     return s
 
 
-def is_contained(box1, box2, ratio = 0.1):
+def is_contained(box1, box2, threshold=0.1):
+    """
+    计算box1是否包含了box2
+    """
     b1_x1, b1_y1, b1_x2, b1_y2 = box1[0], box1[1], box1[2], box1[3]
     b2_x1, b2_y1, b2_x2, b2_y2 = box2[0], box2[1], box2[2], box2[3]
+    # 不相交直接退出检测
+    if b1_x2 < b2_x1 or b1_x1 > b2_x2 or b1_y2 < b2_y1 or b1_y1 > b2_y2:
+        return False
+    # 计算box2的总面积
+    b2_area = (b2_x2 - b2_x1) * (b2_y2 - b2_y1)
 
-    # 计算box1的宽度和高度
-    b1_width = b1_x2 - b1_x1
-    b1_height = b1_y2 - b1_y1
+    # 计算box1和box2的交集
+    intersect_x1 = max(b1_x1, b2_x1)
+    intersect_y1 = max(b1_y1, b2_y1)
+    intersect_x2 = min(b1_x2, b2_x2)
+    intersect_y2 = min(b1_y2, b2_y2)
 
-    # 根据比例计算容忍值
-    tolerance = max(b1_width, b1_height) * ratio
+    # 计算交集的面积
+    intersect_area = max(0, intersect_x2 - intersect_x1) * max(0, intersect_y2 - intersect_y1)
 
-    # 使用计算出的容忍值进行比较
-    return (b2_x1 - tolerance) >= b1_x1 and (b2_y1 - tolerance) >= b1_y1 and \
-        (b2_x2 + tolerance) <= b1_x2 and (b2_y2 + tolerance) <= b1_y2
+    # 计算box2在box1外面的面积
+    outside_area = b2_area - intersect_area
+
+    # 计算外面的面积占box2总面积的比例
+    ratio = outside_area / b2_area if b2_area > 0 else 0
+
+    # 判断比例是否大于阈值
+    return ratio < threshold
 
 
 def calculate_iou(box1, box2):
@@ -87,35 +99,108 @@ def calculate_iou(box1, box2):
 
 
 # 将包含关系和重叠关系的box进行过滤，只保留一个
-def filter_consecutive_boxes(layout_boxes: list[LayoutBox], iou_threshold=0.92)->(list[LayoutBox], list[int]):
+def filter_consecutive_boxes(layout_boxes: list[LayoutBox], iou_threshold=0.92) -> (list[LayoutBox], list[int]):
+    """
+    检测布局框列表中包含关系和重叠关系，只保留一个
+    LayoutBox.bbox: (xmin,ymin,xmax,ymax)
+    """
     boxes = [layout_box.bbox for layout_box in layout_boxes]
     if len(boxes) <= 1:
         return boxes
-    # 从后向前遍历列表
-    i = len(boxes) - 2  # 开始于倒数第二个元素
-    current_box = boxes[i + 1]
-    previous_box = boxes[i]
-    cur_idx = i + 1
-    idx = []
-    while i >= 0:
-        # 检查当前框是否包含或重叠于前一个框,或者包含了前一个框
-        if not is_contained(current_box, previous_box) and calculate_iou(current_box, previous_box) <= iou_threshold:
-            # filtered_boxes.insert(0, current_box)
-            current_box = previous_box
-            idx.insert(0, cur_idx)
-            cur_idx = i
-        i -= 1
-        previous_box = boxes[i]
-    idx.insert(0, cur_idx)
-    filtered_boxes = [layout_boxes[i] for i in idx]
+    for box1 in boxes:
+        if not box1:
+            continue
+        for box2 in boxes:
+            if not box2:
+                continue
+            if box1 == box2:
+                continue
+            if is_contained(box1, box2) or calculate_iou(box1, box2) > iou_threshold:
+                i = boxes.index(box2)
+                boxes[i] = None
+    filtered_boxes = [layout_boxes[i] for i, box in enumerate(boxes) if box is not None]
+    idx = [i for i, box in enumerate(boxes) if box is not None]
     return filtered_boxes, idx
 
 
-def pe_res_trans_2_layout_box(pe_layout_res):
+def pe_res_trans_2_layout_box(pe_layout_res) -> list[LayoutBox]:
     label_bboxes = []
     for idx, res in enumerate(pe_layout_res['layout_dets']):
         xmin, ymin = int(res['poly'][0]), int(res['poly'][1])
         xmax, ymax = int(res['poly'][4]), int(res['poly'][5])
-        bbox = LayoutBox((xmin, ymin, xmax, ymax), id2names[res['category_id']])
+        bbox = LayoutBox((xmin, ymin, xmax, ymax), id2names[res['category_id']], res['score'])
         label_bboxes.append(bbox)
     return label_bboxes
+
+
+def layout_box_trans_2_pe_res(layout_boxes: list[LayoutBox]) -> dict:
+    pe_layout_res = {}
+    pe_layout_dets = []
+    for idx, bbox in enumerate(layout_boxes):
+        pe_layout_dets.append({
+            'poly':
+                [bbox.bbox[0], bbox.bbox[1],
+                 bbox.bbox[2], bbox.bbox[1],
+                 bbox.bbox[2], bbox.bbox[3],
+                 bbox.bbox[0], bbox.bbox[3]],
+            'category_id': id2names.index(bbox.label),
+            'score': bbox.score
+        })
+    pe_layout_res['layout_dets'] = pe_layout_dets
+    return pe_layout_res
+
+
+def trans_2_layout_box(paddle_layout_res) -> list[LayoutBox]:
+    label_bboxes = []
+    for idx, paddle_dict in enumerate(paddle_layout_res):
+        bbox = LayoutBox(paddle_dict['bbox'], paddle_dict['type'])
+        label_bboxes.append(bbox)
+    return label_bboxes
+
+
+def header_footer_fix_by_paddleocr(img_array, label_boxes: list[LayoutBox], iou_threshold=0.5, ppstructure=None):
+    # 修正识别为title的页眉页脚信息
+    if not ppstructure:
+        ppstructure = PPStructure(table=False, ocr=False, show_log=True)
+    paddle_layout_res = ppstructure(img_array)
+    paddle_label_bboxes = trans_2_layout_box(paddle_layout_res)
+    # 找到paddle识别到的页眉页脚
+    paddle_label_bboxes = [paddle_label_bboxes[i] for i in range(len(paddle_label_bboxes)) if
+                           paddle_label_bboxes[i].label == 'header' or paddle_label_bboxes[i].label == 'footer']
+    for i, box in enumerate(label_boxes):
+        for paddle_box in paddle_label_bboxes:
+            if calculate_iou(paddle_box.bbox, box.bbox) >= iou_threshold or is_contained(paddle_box.bbox, box.bbox):
+                label_boxes[i].label = 'abandon'
+    return label_boxes
+
+
+def layout_abandon_fix_to_text(layout_boxes: list[LayoutBox]) -> (list[LayoutBox], list[int]):
+    """
+    修改布局框列表中元素的label属性，以修正页眉页脚的错误识别。
+
+    当遇到label为'abandon'的元素，但其后一个元素的label不是'abandon'时，
+    将当前元素的label属性修改为'plain_text'。
+
+    参数:
+    layout_boxes (List[LayoutBox]): 包含LayoutBox对象的列表，每个对象代表页面上的一个布局框。
+
+    返回:
+    Tuple[List[LayoutBox], List[int]]:
+        第一个元素是修改后的LayoutBox对象列表；
+        第二个元素是包含所有被修改元素索引的列表。
+    """
+    modified_indices = []
+
+    # 遍历列表中的元素，除了最后一个元素
+    for i in range(len(layout_boxes) - 1):
+        # 检查当前元素的label是否为'abandon'
+        if layout_boxes[i].label == 'abandon':
+            # 检查下一个元素的label是否不是'abandon'
+            if layout_boxes[i + 1].label != 'abandon':
+                # 将当前元素的label设置为'plain_text'
+                layout_boxes[i].label = 'plain_text'
+                modified_indices.append(i)  # 记录修改的索引
+
+    return layout_boxes, modified_indices
+
+# def layout_title_fix_to_abandan()

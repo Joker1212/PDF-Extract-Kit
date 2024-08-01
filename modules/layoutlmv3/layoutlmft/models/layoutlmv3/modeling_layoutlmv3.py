@@ -44,6 +44,10 @@ from .configuration_layoutlmv3 import LayoutLMv3Config
 from timm.models.layers import to_2tuple
 
 logger = logging.get_logger(__name__)
+id2names = ["title", "plain_text", "abandon", "figure", "figure_caption", "table", "table_caption",
+            "table_footnote",
+            "isolate_formula", "formula_caption", " ", " ", " ", "inline_formula", "isolated_formula",
+            "ocr_text"]
 
 
 class PatchEmbed(nn.Module):
@@ -1287,17 +1291,21 @@ class LayoutLMv3ForSequenceClassification(LayoutLMv3PreTrainedModel):
 
 
 class LayoutBox:
-    def __init__(self, bbox, label, score = 1.0):
+    def __init__(self, bbox, label, score=1.0, box_type='single', merged_bbox=None):
         """
         初始化LayoutBox类
 
         :param bbox: 四元组 (xmin, ymin, xmax, ymax)，表示边界框的位置
         :param label: str 类型，表示布局元素的标签
+        :param score: float 类型，标识置信度
+        :param box_type: str 类型，标识是普通单个布局元素还是多个布局元素合成的, single, merge
+        :param merged_bbox: 列表 类型，每个元素是四元组 (xmin, ymin, xmax, ymax)，表示边界框的位置
         """
         self.bbox = bbox
         self.label = label
         self.score = score
-
+        self.box_type = box_type
+        self.merged_bbox = merged_bbox
     def __repr__(self):
         """
         返回LayoutBox对象的字符串表示

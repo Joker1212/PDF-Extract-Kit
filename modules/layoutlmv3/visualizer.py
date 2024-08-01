@@ -395,7 +395,7 @@ class Visualizer:
                 "pred_boxes", "pred_classes", "scores", "pred_masks" (or "pred_masks_rle").
 
         Returns:
-            output (VisImage): image object with visualizations.
+            output(VisImage): image object with visualizations.
         """
         boxes = predictions.pred_boxes if predictions.has("pred_boxes") else None
         scores = predictions.scores if predictions.has("scores") else None
@@ -449,7 +449,7 @@ class Visualizer:
             alpha (float): the larger it is, the more opaque the segmentations are.
 
         Returns:
-            output (VisImage): image object with visualizations.
+            output(VisImage): image object with visualizations.
         """
         if isinstance(sem_seg, torch.Tensor):
             sem_seg = sem_seg.numpy()
@@ -488,7 +488,7 @@ class Visualizer:
             area_threshold (int): stuff segments with less than `area_threshold` are not drawn.
 
         Returns:
-            output (VisImage): image object with visualizations.
+            output(VisImage): image object with visualizations.
         """
         pred = _PanopticPrediction(panoptic_seg, segments_info, self.metadata)
 
@@ -548,7 +548,7 @@ class Visualizer:
             dic (dict): annotation/segmentation data of one image, in Detectron2 Dataset format.
 
         Returns:
-            output (VisImage): image object with visualizations.
+            output(VisImage): image object with visualizations.
         """
         annos = dic.get("annotations", None)
         if annos:
@@ -646,7 +646,7 @@ class Visualizer:
                 for full list of formats that the colors are accepted in.
 
         Returns:
-            output (VisImage): image object with visualizations.
+            output(VisImage): image object with visualizations.
         """
         num_instances = 0
         if boxes is not None:
@@ -764,7 +764,7 @@ class Visualizer:
                 for full list of formats that the colors are accepted in.
 
         Returns:
-            output (VisImage): image object with visualizations.
+            output(VisImage): image object with visualizations.
         """
         num_instances = len(boxes)
 
@@ -801,7 +801,7 @@ class Visualizer:
                 and the last dimension corresponds to (x, y, probability).
 
         Returns:
-            output (VisImage): image object with visualizations.
+            output(VisImage): image object with visualizations.
         """
         visible = {}
         keypoint_names = self.metadata.get("keypoint_names")
@@ -874,7 +874,7 @@ class Visualizer:
             rotation: rotation angle in degrees CCW
 
         Returns:
-            output (VisImage): image object with text drawn.
+            output(VisImage): image object with text drawn.
         """
         if not font_size:
             font_size = self._default_font_size
@@ -911,7 +911,7 @@ class Visualizer:
             line_style (string): the string to use to create the outline of the boxes.
 
         Returns:
-            output (VisImage): image object with box drawn.
+            output(VisImage): image object with box drawn.
         """
         x0, y0, x1, y1 = box_coord
         width = x1 - x0
@@ -951,7 +951,7 @@ class Visualizer:
             label (string): label for rotated box. It will not be rendered when set to None.
 
         Returns:
-            output (VisImage): image object with box drawn.
+            output(VisImage): image object with box drawn.
         """
         cnt_x, cnt_y, w, h, angle = rotated_box
         area = w * h
@@ -998,7 +998,7 @@ class Visualizer:
             radius (int): radius of the circle.
 
         Returns:
-            output (VisImage): image object with box drawn.
+            output(VisImage): image object with box drawn.
         """
         x, y = circle_coord
         self.output.ax.add_patch(
@@ -1021,7 +1021,7 @@ class Visualizer:
                 a default value will be computed and used.
 
         Returns:
-            output (VisImage): image object with line drawn.
+            output(VisImage): image object with line drawn.
         """
         if linewidth is None:
             linewidth = self._default_font_size / 3
@@ -1054,7 +1054,7 @@ class Visualizer:
             area_threshold (float): a connected component small than this will not be shown.
 
         Returns:
-            output (VisImage): image object with mask drawn.
+            output(VisImage): image object with mask drawn.
         """
         if color is None:
             color = random_color(rgb=True, maximum=1)
@@ -1110,7 +1110,7 @@ class Visualizer:
             alpha (float): blending efficient. Smaller values lead to more transparent masks.
 
         Returns:
-            output (VisImage): image object with polygon drawn.
+            output(VisImage): image object with polygon drawn.
         """
         if edge_color is None:
             # make edge color darker than the polygon color
@@ -1230,7 +1230,7 @@ class Visualizer:
     def get_output(self):
         """
         Returns:
-            output (VisImage): the image output containing the visualizations added
+            output(VisImage): the image output containing the visualizations added
             to the image.
         """
         return self.output
