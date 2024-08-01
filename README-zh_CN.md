@@ -1,7 +1,6 @@
 
 <p align="center">
-  <img src="assets/images/datalab_logo.png" width="160px" style="vertical-align:middle;">
-  <span style="font-size: 28px; vertical-align: middle;">PDF-Extract-Kit</span>
+  <img src="assets/images/pdf-extract-kit_logo.png" width="220px" style="vertical-align:middle;">
 </p>
 
 
@@ -36,6 +35,13 @@ PDF文档中包含大量知识信息，然而提取高质量的PDF内容并非�
 PDF内容提取框架如下图所示
 
 ![](assets/demo/pipeline_v2.png)
+
+
+## 新闻和更新
+- `2024.08.01` 🎉🎉🎉 新增了[StructEqTable](https://github.com/opendatalab/PDF-Extract-Kit/blob/main/demo/TableRec/StructEqTable/README_TABLE.md)表格识别模块用于表格内容提取，欢迎使用！
+- `2024.07.01` 🎉🎉🎉 我们发布了`PDF-Extract-Kit`，一个用于高质量PDF内容提取的综合工具包，包括`布局检测`、`公式检测`、`公式识别`和`OCR`。
+```
+
 
 
 <details>
@@ -212,7 +218,7 @@ PDF内容提取框架如下图所示
 ### 表格识别
 ![StructEqTable](assets/demo/table_expamle.png)
 
-表格识别我们使用的是[StructEqTable](https://github.com/UniModal4Reasoning/StructEqTable-Deploy)的权重，用于将表格转换为LaTeX。
+表格识别我们使用的是[StructEqTable](https://github.com/UniModal4Reasoning/StructEqTable-Deploy)的权重，用于将表格转换为LaTeX。相比于PP-StructureV2的表格识别，StructEqTable的识别能力更强，针对复杂表格也能够有不错的效果，但目前可能主要适用于学术论文中的数据，速度也有较大的提升空间，我们仍在不断迭代优化中。在一周内我们会将表格识别的功能同步更新到[MinerU](https://github.com/opendatalab/MinerU)中。
 
 ## 使用教程
 
@@ -303,6 +309,13 @@ python pdf_extract.py --pdf data/pdfs/ocr_1.pdf
       eprint={2404.15254},
       archivePrefix={arXiv},
       primaryClass={cs.CV}
+}
+
+@article{he2024opendatalab,
+  title={Opendatalab: Empowering general artificial intelligence with open datasets},
+  author={He, Conghui and Li, Wei and Jin, Zhenjiang and Xu, Chao and Wang, Bin and Lin, Dahua},
+  journal={arXiv preprint arXiv:2407.13773},
+  year={2024}
 }
 ```
 

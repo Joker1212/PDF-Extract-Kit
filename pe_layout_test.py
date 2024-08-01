@@ -12,6 +12,7 @@ from modules.layoutReader.layout_sort_rules import sorted_layout_boxes
 from modules.layoutlmv3.layoutlmft.models.layoutlmv3.modeling_layoutlmv3 import LayoutBox
 from modules.post_process import pe_res_trans_2_layout_box, filter_consecutive_boxes, layout_abandon_fix_to_text, \
     header_footer_fix_by_paddleocr, layout_box_trans_2_pe_res
+from modules.self_modify import ModifiedPaddleOCR
 from pdf_extract import layout_model_init
 
 with open('configs/model_configs.yaml') as f:
@@ -23,7 +24,7 @@ layout_model = layout_model_init(model_configs['model_args']['layout_weight'])
 layout_reader_path = model_configs['model_paths']['layout_reader_path']
 table_engine = PPStructure(table=False, ocr=False, show_log=True)
 continuealbe_labels = ['plain_text', 'table']
-
+ocr_model = ModifiedPaddleOCR(show_log=True)
 def pdf_parse():
     file_path = f'./pdfs/lunwen.pdf'
     # 保存本页图片信息
@@ -53,14 +54,44 @@ def pdf_parse():
         )
         doc_layout_result.append(pe_res)
     json.dump(doc_layout_result, open(f'{output_dir}/{file_name_with_ext}.json', 'w'))
-    # 按x坐标变动切片，实现跨页拼装逻辑
+    # 转换为layout_box结构
+    all_label_boxes = [pe_res_trans_2_layout_box(page_res) for page_res in doc_layout_result]
+    # 拼装同页的跨列数据
+    all_label_boxes = [handle_page_inner_box_merge(label_boxes) for label_boxes in all_label_boxes]
+    # 拼装跨页的数据
+    all_label_boxes = [handle_page_between_box_merge(label_boxes) for label_boxes in all_label_boxes]
+    #进行ocr识别解析
+    # for label_boxes in all_label_boxes:
+
+def handle_page_between_box_merge(all_label_boxes):
+    for i in range(len(all_label_boxes) - 1):
+        cur = all_label_boxes[i][-1]
+        next = all_label_boxes[i + 1][0]
+        # 类型为表格或普通文本，且当前检测框与下一个检测框之间的距离大于当前检测框长度
+        if cur.label == next.label and cur.label in continuealbe_labels:
+            if cur.box_type == 'merge' and next.box_type == 'merge':
+                cur.merged_bbox.extend(next.merged_bbox)
+                merge_label_box = cur
+            elif cur.box_type == 'merge':
+                cur.merged_bbox.append(next.bbox)
+                merge_label_box = cur
+            elif next.box_type == 'merge':
+                next.merged_bbox.insert(0, cur.bbox)
+                merge_label_box = next.merged_bbox
+            else:
+                merge_label_box = LayoutBox(label=cur.label, score=cur.score, bbox=None, box_type='merge',
+                                            merged_bbox=[cur.bbox, next.bbox])
+
+            all_label_boxes[i][-1] = merge_label_box
+            all_label_boxes[i + 1].pop(0)
 
 
 def handle_page_inner_box_merge(label_boxes):
     """
     将多列pdf可能导致的文本或表格分段整合成一个merge_box
     """
-    merged_boxes = []
+    if len(label_boxes) <= 1:
+        return label_boxes
     for i in range(len(label_boxes) - 1):
         cur = label_boxes[i]
         next = label_boxes[i + 1]
@@ -69,15 +100,15 @@ def handle_page_inner_box_merge(label_boxes):
         if cur.label == next.label and cur.label in continuealbe_labels and next.bbox[0] - cur.bbox[0] > cur_box_len:
             merge_label_box = LayoutBox(label=cur.label, score=cur.score, bbox=None, box_type='merge',
                                         merged_bbox=[cur.bbox, next.bbox])
-            merged_boxes[i] = merge_label_box
-            merged_boxes[i + 1] = None
+            label_boxes[i] = merge_label_box
+            label_boxes[i + 1] = None
     return [box for box in label_boxes if box is not None]
 
 
 def parse_from_img():
     image_output = f'./output/pe'
     os.makedirs(image_output, exist_ok=True)
-    image_ori = f'./output/sorted/lunwen/page0.jpg'
+    image_ori = f'./output/sorted/page0.jpg'
     with Image.open(image_ori) as img:
         # 将PIL图像转换为RGB模式的NumPy数组（PIL默认打开可能是RGB或RGBA，这取决于图像）
         img_array = np.array(img.convert('RGB'))

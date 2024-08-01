@@ -1,7 +1,6 @@
 
 <p align="center">
-  <img src="assets/images/datalab_logo.png" width="160px" style="vertical-align:middle;">
-  <span style="font-size: 28px; vertical-align: middle;">PDF-Extract-Kit</span>
+  <img src="assets/images/pdf-extract-kit_logo.png" width="220px" style="vertical-align:middle;">
 </p>
 
 <div align="center">
@@ -86,6 +85,10 @@ The types included in `category_id` are as follows:
  15: 'ocr_text'}          # OCR result
 ```
 </details>
+
+## News and Update
+- `2024.08.01` 🎉🎉🎉 Added the [StructEqTable](https://github.com/opendatalab/PDF-Extract-Kit/blob/main/demo/TableRec/StructEqTable/README_TABLE.md) module for table content extraction. Welcome to use it!
+- `2024.07.01` 🎉🎉🎉 We released `PDF-Extract-Kit`, a comprehensive toolkit for high-quality PDF content extraction, including `layout detection`, `formula detection`, `formula recognition`, and `OCR`.
 
 
 ## Visualization of Results
@@ -208,7 +211,8 @@ The formula recognition we used is based on the weights downloaded from [UniMERN
 ### Table Recognition
 ![StructEqTable](assets/demo/table_expamle.png)
 
-The table recognition we used is based on the weights downloaded from [StructEqTable](https://github.com/UniModal4Reasoning/StructEqTable-Deploy), a solution that converts images of Table into LaTeX.
+The table recognition we used is based on the weights downloaded from [StructEqTable](https://github.com/UniModal4Reasoning/StructEqTable-Deploy), a solution that converts images of Table into LaTeX. Compared to the table recognition capability of PP-StructureV2, StructEqTable demonstrates stronger recognition performance, delivering good results even with complex tables, which may currently be best suited for data within research papers. There is also significant room for improvement in terms of speed, and we are continuously iterating and optimizing. Within a week, we will update the table recognition capability to [MinerU](https://github.com/opendatalab/MinerU).
+
 
 ## Installation Guide
 
@@ -296,6 +300,12 @@ If you find our models / code / papers useful in your research, please consider 
       eprint={2404.15254},
       archivePrefix={arXiv},
       primaryClass={cs.CV}
+}
+@article{he2024opendatalab,
+  title={Opendatalab: Empowering general artificial intelligence with open datasets},
+  author={He, Conghui and Li, Wei and Jin, Zhenjiang and Xu, Chao and Wang, Bin and Lin, Dahua},
+  journal={arXiv preprint arXiv:2407.13773},
+  year={2024}
 }
 ```
 
