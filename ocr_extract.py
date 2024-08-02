@@ -7,6 +7,7 @@ import cv2
 import torch
 import yaml
 from PIL import Image
+# from paddleocr import PPStructure
 from struct_eqtable import build_model
 
 from modules.extract_pdf import load_pdf_fitz_with_img_return
@@ -209,6 +210,9 @@ def ocr_extract(file_path=None, doc_layout_result=None, img_list=None):
             elif label_box.label == 'isolate_formula':
                 ocr_parse_res['latex'] = page_formulas[i][j]
                 ocr_res = None
+            # elif label_box.label == 'figure':
+            #
+            #     ocr_parse_res['text'] = text
             else:
                 # 其它类型不进行识别，但是需要站位
                 ocr_res = None
@@ -268,6 +272,9 @@ def ocr_rec_table(img, label_box):
         bbox_img = get_croped_image(img, [xmin, ymin, xmax, ymax])
     with torch.no_grad():
         ocr_res = tr_model(bbox_img)
+        # ocr_res = table_engine(bbox_img)
+    # if len(ocr_res) > 0:
+    #     ocr_res = [res for res in ocr_res if res['type'] == 'table']
     latex = ocr_res[0]
     return ocr_res, latex
 
@@ -283,10 +290,18 @@ def ocr_rec_text(img, label_box):
     ocr_res = ocr_model.ocr(cropped_img)[0]
     if ocr_res:
         all_text = [box_ocr_res[1][0] for box_ocr_res in ocr_res]
+        all_text = ''.join(all_text)
         return ocr_res, all_text
     return None,None
 
 
 if __name__ == '__main__':
-    os.environ['ALBUMENTATIONS_DISABLE_VERSION_CHECK'] = '1'
+    # os.environ['ALBUMENTATIONS_DISABLE_VERSION_CHECK'] = '1'
     ocr_extract()
+    # image_output = f'./output/pe'
+    # os.makedirs(image_output, exist_ok=True)
+    # image_ori = f'./output/sorted/lunwen/page2.jpg'
+    # with Image.open(image_ori) as img:
+    #     label_box = LayoutBox([857, 333, 1499, 771], 'table')
+    #     ocr_res, latex = ocr_rec_table(img, label_box)
+    #     print(latex)

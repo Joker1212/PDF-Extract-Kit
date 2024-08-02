@@ -31,7 +31,7 @@ paddle_layout_engine = PPStructure(table=False, ocr=False, show_log=True)
 
 
 def pdf_layout_parse():
-    file_path = f'./pdfs/latex.pdf'
+    file_path = f'./pdfs/lunwen.pdf'
     # 保存本页图片信息
     # 提取文件名（包括扩展名）
     file_name_with_ext = os.path.basename(file_path)
