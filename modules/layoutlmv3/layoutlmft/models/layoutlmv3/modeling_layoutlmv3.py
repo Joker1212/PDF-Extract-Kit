@@ -50,7 +50,7 @@ id2names = ["title", "plain_text", "abandon", "figure", "figure_caption", "table
             "isolate_formula", "formula_caption", " ", " ", " ", "inline_formula", "isolated_formula",
             "ocr_text"]
 
-
+formula_types = ['isolate_formula', 'isolated_formula', 'inline_formula']
 class PatchEmbed(nn.Module):
     """ Image to Patch Embedding
     """

@@ -21,3 +21,5 @@ models/MFD/*
 models/MFR/*
 models/TR/*
 models/LayoutReader/*
+/models/TableRec/
+/models/TableRec/
