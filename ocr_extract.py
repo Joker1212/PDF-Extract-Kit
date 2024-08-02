@@ -122,7 +122,7 @@ def handle_page_between_box_merge(all_label_boxes):
                 merge_label_box = cur
             elif next.box_type == 'merge':
                 next.merged_bbox.insert(0, cur.bbox)
-                merge_label_box = next.merged_bbox
+                merge_label_box = next
             else:
                 merge_label_box = LayoutBox(label=cur.label, score=cur.score, bbox=None, box_type='merge',
                                             merged_bbox=[cur.bbox, next.bbox])
